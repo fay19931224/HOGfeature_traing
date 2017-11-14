@@ -16,7 +16,7 @@ class FeatureExtractor
 private:
 	Size WINDOW_SIZE;
 	Size CELL_SIZE;
-
+	string dir;
 public:
 	FeatureExtractor();
 	virtual ~FeatureExtractor();

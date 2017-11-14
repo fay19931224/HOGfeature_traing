@@ -10,11 +10,12 @@
 
 int main()
 {
-	FeatureExtractor extractor;
-	Mat positive = extractor.ExtractorPositiveSample();
-	printf("positive extract finish!\n");
-	Mat negative = extractor.ExtractorNegativeSample();
-	printf("negative extract finish!\n");
+	FeatureExtractor* extractor=new FeatureExtractor();
+	Mat positive = extractor->ExtractorPositiveSample();	
+	std::cout << "positive extract finish!" << std::endl;
+	Mat negative = extractor->ExtractorNegativeSample();
+	std::cout << "negative extract finish!" << std::endl;
+	
 
 	Mat trainingDataMat(positive.rows + negative.rows, positive.cols, CV_32FC1);
 	//將正樣本資料放入mixData
@@ -26,26 +27,47 @@ int main()
 
 	std::cout << "memcpy finish!"<<std::endl;
 	
-
 	positive.release();
 	negative.release();
 
 	Ptr<ml::SVM> svm = ml::SVM::create();
 	svm->setType(cv::ml::SVM::Types::C_SVC);
-	svm->setKernel(cv::ml::SVM::KernelTypes::LINEAR);
-	svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100000, 1e-6));
-	cv::Ptr<cv::ml::TrainData> td = cv::ml::TrainData::create(trainingDataMat, cv::ml::SampleTypes::ROW_SAMPLE, dataProperty);
-	svm->train(td);
-	svm->save("1024.xml");
-	/*CvSVM svm;
-	CvSVMParams params;
-	params.svm_type = SVM::C_SVC;
-	params.kernel_type = SVM::LINEAR;
-	params.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100000, 1e-6);	
-	svm.train(mixData, dataProperty, Mat(), Mat(), params);//訓練數據、分類結果、參數設定
-	svm.save("svmFeature1002.xml");*/
+	svm->setKernel(cv::ml::SVM::KernelTypes::LINEAR);		
+	//svm->setKernel(cv::ml::SVM::KernelTypes::RBF);
+	svm->setTermCriteria(cv::TermCriteria(CV_TERMCRIT_ITER, 100000, 1e-6));
+	svm->train(trainingDataMat, ml::SampleTypes::ROW_SAMPLE, dataProperty);
+	svm->save("側面全身C_SVC_LINEAR.xml");	
 	std::cout << "svm training is done!" << std::endl;	
 	system("pause");
 	return 0;
 }
+/*int main()
+{
+	FeatureExtractor extractor;
+	Mat positive = extractor.ExtractorPositiveSample();
+	std::cout << "positive extract finish!" << std::endl;
 
+	Mat trainingDataMat(positive.rows , positive.cols, CV_32FC1);
+	//將正樣本資料放入mixData
+	memcpy(trainingDataMat.data, positive.data, sizeof(float)*positive.rows*positive.cols);	
+	Mat dataProperty(positive.rows, 1, CV_32SC1, Scalar(-1.0));
+	dataProperty.rowRange(0, positive.rows) = Scalar(1.0);
+
+	std::cout << "memcpy finish!" << std::endl;
+
+	positive.release();	
+
+	Ptr<ml::SVM> svm = ml::SVM::create();
+	svm->setType(cv::ml::SVM::Types::ONE_CLASS);
+	svm->setKernel(cv::ml::SVM::KernelTypes::RBF);
+	
+	svm->setNu(0.1);
+	
+	svm->setTermCriteria(cvTermCriteria(CV_TERMCRIT_ITER,10000, FLT_EPSILON));
+
+	svm->train(trainingDataMat, ml::SampleTypes::ROW_SAMPLE, dataProperty);
+	svm->save("側面全身ONE_CLASS_RBF.xml");
+	std::cout << "svm training is done!" << std::endl;
+	system("pause");
+	return 0;
+}*/
