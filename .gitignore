@@ -242,8 +242,8 @@ ModelManifest.xml
 .fake/
 
 # Image
-.jpg
-.txt
+*.jpg
+*.txt
 
 # xml
 .xml

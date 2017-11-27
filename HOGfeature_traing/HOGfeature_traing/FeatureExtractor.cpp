@@ -2,15 +2,21 @@
 
 
 FeatureExtractor::FeatureExtractor()
-{	
-	//string dir = "機車正面全身/";
+{		
+	//dir = "騎士人頭/";
+	//WINDOW_SIZE = Size(32,32);
+
+	dir = "機車正背面/";
+	WINDOW_SIZE = Size(48, 104);
+
+	//dir = "機車正面全身/";
 	//WINDOW_SIZE = Size(48, 104);
 
-	//dir = "機車背面/";
+	//dir = "機車背面全身/";
 	//WINDOW_SIZE = Size(48, 104);
 
-	dir = "機車側面全身/";
-	WINDOW_SIZE = Size(72, 88);
+//	dir = "機車側面全身/";
+	//WINDOW_SIZE = Size(72, 88);
 
 	//string dir = "機車側面半身/";
 	//WINDOW_SIZE = Size(48, 72);//側面半身
@@ -23,14 +29,16 @@ FeatureExtractor::~FeatureExtractor()
 }
 
 Mat FeatureExtractor::ExtractorPositiveSample()
-{	
-	ifstream ifs(dir + "positive.txt", ios::in);
+{	                
+	string path = "pos/" + dir;
+	ifstream ifs(path + "positive.txt", ios::in);
 	//vector<vector<Point>> locationList;
 	vector<vector<float>> descriptorValueList;
 
 	if (!ifs.is_open())
 	{
 		cout << "fail" << endl;
+		system("PAUSE");
 		return Mat();
 	}
 	while (!ifs.eof())
@@ -39,14 +47,15 @@ Mat FeatureExtractor::ExtractorPositiveSample()
 		getline(ifs, fileName);
 		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
 		{
-			Mat img = imread(dir + fileName, 0);			
+			Mat img = imread(path + fileName, 0);			
 			if (img.empty())
 			{
 				cout << fileName << "error" << endl;
+				system("PAUSE");
 				continue;
 			}
 			else {
-				cout << fileName << endl;
+				//cout << fileName << endl;
 			}
 			//resize(img, img, WINDOW_SIZE);
 			//imshow("img", img);
@@ -54,6 +63,7 @@ Mat FeatureExtractor::ExtractorPositiveSample()
 			vector<Point> location;
 			vector<float> descriptorValue;
 			HOGDescriptor descriptor(WINDOW_SIZE, Size(CELL_SIZE.width * 2, CELL_SIZE.height * 2), CELL_SIZE, CELL_SIZE, 9);
+			//HOGDescriptor descriptor(WINDOW_SIZE, Size(12,12), Size(2,2), Size(4, 4), 9);
 			descriptor.compute(img, descriptorValue, Size(0, 0), Size(0, 0), location);
 			//locationList.push_back(location);
 			descriptorValueList.push_back(descriptorValue);
@@ -72,8 +82,9 @@ Mat FeatureExtractor::ExtractorPositiveSample()
 
 Mat FeatureExtractor::ExtractorNegativeSample()
 {
-		
-	ifstream ifs("neg\\" + dir+"negative.txt", ios::in);
+	string path = "neg\\"+dir;
+	
+	ifstream ifs(path + "\\negative.txt", ios::in);
 	//vector<vector<Point>> locationList;
 	vector<vector<float>> descriptorValueList;
 
@@ -89,14 +100,17 @@ Mat FeatureExtractor::ExtractorNegativeSample()
 		getline(ifs, fileName);
 		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
 		{
-			Mat img = imread("neg\\"+dir + fileName, 0);			
+			
+			
+			Mat img = imread(path + fileName, 0);
 			if (img.empty())
 			{
 				cout << fileName << " error" << endl;
+				system("PAUSE");
 				continue;
 			}
 			else {
-				cout << fileName << endl;
+				//cout << fileName << endl;
 			}
 			//resize(img, img, WINDOW_SIZE);
 			//imshow("img", img);
@@ -104,6 +118,7 @@ Mat FeatureExtractor::ExtractorNegativeSample()
 			vector<Point> location;
 			vector<float> descriptorValue;
 			HOGDescriptor descriptor(WINDOW_SIZE, Size(CELL_SIZE.width * 2, CELL_SIZE.height * 2), CELL_SIZE, CELL_SIZE, 9);
+			//HOGDescriptor descriptor(WINDOW_SIZE, Size(12, 12), Size(2, 2), Size(4, 4), 9);
 			descriptor.compute(img, descriptorValue, Size(0, 0), Size(0, 0), location);
 			//locationList.push_back(location);
 			descriptorValueList.push_back(descriptorValue);
