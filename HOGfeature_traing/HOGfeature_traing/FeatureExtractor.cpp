@@ -15,13 +15,15 @@ FeatureExtractor::FeatureExtractor()
 	//dir = "機車背面全身/";
 	//WINDOW_SIZE = Size(48, 104);
 
-//	dir = "機車側面全身/";
+	//dir = "機車側面全身/";
 	//WINDOW_SIZE = Size(72, 88);
 
 	//string dir = "機車側面半身/";
 	//WINDOW_SIZE = Size(48, 72);//側面半身
 
 	CELL_SIZE = Size(8, 8);
+
+	_descriptor = new HOGDescriptor(WINDOW_SIZE, Size(CELL_SIZE.width * 2, CELL_SIZE.height * 2), CELL_SIZE, CELL_SIZE, 9);
 }
 
 FeatureExtractor::~FeatureExtractor()
@@ -62,9 +64,8 @@ Mat FeatureExtractor::ExtractorPositiveSample()
 			//waitKey(0);			
 			vector<Point> location;
 			vector<float> descriptorValue;
-			HOGDescriptor descriptor(WINDOW_SIZE, Size(CELL_SIZE.width * 2, CELL_SIZE.height * 2), CELL_SIZE, CELL_SIZE, 9);
-			//HOGDescriptor descriptor(WINDOW_SIZE, Size(12,12), Size(2,2), Size(4, 4), 9);
-			descriptor.compute(img, descriptorValue, Size(0, 0), Size(0, 0), location);
+			
+			_descriptor->compute(img, descriptorValue, WINDOW_SIZE, CELL_SIZE);
 			//locationList.push_back(location);
 			descriptorValueList.push_back(descriptorValue);
 		}
@@ -117,9 +118,7 @@ Mat FeatureExtractor::ExtractorNegativeSample()
 			//waitKey(0);			
 			vector<Point> location;
 			vector<float> descriptorValue;
-			HOGDescriptor descriptor(WINDOW_SIZE, Size(CELL_SIZE.width * 2, CELL_SIZE.height * 2), CELL_SIZE, CELL_SIZE, 9);
-			//HOGDescriptor descriptor(WINDOW_SIZE, Size(12, 12), Size(2, 2), Size(4, 4), 9);
-			descriptor.compute(img, descriptorValue, Size(0, 0), Size(0, 0), location);
+			_descriptor->compute(img, descriptorValue, WINDOW_SIZE, CELL_SIZE);
 			//locationList.push_back(location);
 			descriptorValueList.push_back(descriptorValue);
 			//Mat img = imread(dir + fileName, 0);

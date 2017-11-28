@@ -17,6 +17,7 @@ private:
 	Size WINDOW_SIZE;
 	Size CELL_SIZE;
 	string dir;
+	HOGDescriptor *_descriptor;
 public:
 	FeatureExtractor();
 	virtual ~FeatureExtractor();
