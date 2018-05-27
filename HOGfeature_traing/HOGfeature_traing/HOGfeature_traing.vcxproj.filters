@@ -21,9 +21,24 @@
     <ClCompile Include="FeatureExtractor.cpp">
       <Filter>資源檔</Filter>
     </ClCompile>
+    <ClCompile Include="Trainer.cpp">
+      <Filter>資源檔</Filter>
+    </ClCompile>
+    <ClCompile Include="HogFeature.cpp">
+      <Filter>資源檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FeatureExtractor.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Trainer.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="PublicDataStructure.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="HogFeature.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
