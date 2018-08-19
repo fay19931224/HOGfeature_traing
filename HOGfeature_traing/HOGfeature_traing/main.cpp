@@ -9,7 +9,6 @@
 #include "FeatureExtractor.h"
 #include "Trainer.h"
 
-
 void randomProduceSample()
 {
 	
@@ -56,15 +55,18 @@ void randomProduceSample()
 		}
 	}	
 }
-
 int main()
-{	
+{		
+
 	//string trainingImformation = "HOG參數檔/機車側面.txt";
-	string trainingImformation = "HOG參數檔/機車正背面.txt";
+	//string trainingImformation = "HOG參數檔/機車正背面.txt";
+	//string trainingImformation = "HOG參數檔/行人.txt";
+	string trainingImformation = "HOG參數檔/安全帽.txt";
 	FeatureExtractor* extractor = new FeatureExtractor(trainingImformation);	
 	Trainer trainer(extractor);
 
-	extractor->ShowHOGFeature("pos/機車正背面/videoData1202_2  (60).jpg");
+	//extractor->ShowHOGFeature("pos/機車正背面/videoData1202_2  (69).jpg");
+	//extractor->ShowHOGFeature("pos/行人/pos358.jpg");
 	//extractor->ShowHOGFeature("pos/機車側面全身/videoData1202_6 (30).jpg");
 	trainer.runTrainProcess(); 
 	

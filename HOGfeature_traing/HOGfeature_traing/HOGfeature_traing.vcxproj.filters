@@ -27,6 +27,9 @@
     <ClCompile Include="HogFeature.cpp">
       <Filter>資源檔</Filter>
     </ClCompile>
+    <ClCompile Include="PrimalSVM.cpp">
+      <Filter>資源檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FeatureExtractor.h">
@@ -39,6 +42,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="HogFeature.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimalSVM.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

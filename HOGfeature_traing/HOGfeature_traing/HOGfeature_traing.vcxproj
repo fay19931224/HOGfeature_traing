@@ -115,11 +115,13 @@
     <ClCompile Include="FeatureExtractor.cpp" />
     <ClCompile Include="HogFeature.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PrimalSVM.cpp" />
     <ClCompile Include="Trainer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FeatureExtractor.h" />
     <ClInclude Include="HogFeature.h" />
+    <ClInclude Include="PrimalSVM.h" />
     <ClInclude Include="PublicDataStructure.h" />
     <ClInclude Include="Trainer.h" />
   </ItemGroup>

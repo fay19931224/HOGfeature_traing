@@ -17,4 +17,5 @@ struct HogFeatureParameter
 	bool 	gammaCorrection;		//是否Gamma校正
 	int 	nlevels;				//樣本的最大数量
 	bool 	signedGradient;		//梯度是否有號
+	bool	verson;
 };

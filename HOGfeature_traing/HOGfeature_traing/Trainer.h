@@ -26,10 +26,9 @@ class Trainer
 		
 
 		void getFilesInDirectory(const string& dirName, vector<cv::Mat>& files, const vector<string>& validExtensions);
-
-		
+		FeatureExtractor * _featureExtractor;		
 	private:		
-		FeatureExtractor * _featureExtractor;
+		
 		vector<Mat> _positiveTrainingImages;
 		vector<Mat> _negativeTrainingImages;
 		vector<Mat> _loadedImages;

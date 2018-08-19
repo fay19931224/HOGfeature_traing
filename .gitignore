@@ -244,9 +244,11 @@ ModelManifest.xml
 # Image
 *.jpg
 *.txt
+*.png
 
 # xml
-.xml
+*.xml
+
 /HOGfeature_traing/HOGfeature_traing/學長版本
 /HOGfeature_traing/HOGfeature_traing/舊版特徵
 /HOGfeature_traing/HOGfeature_traing/舊版特徵

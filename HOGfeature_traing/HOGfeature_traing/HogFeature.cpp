@@ -249,16 +249,14 @@ void HogFeature::normalizeHogFeature(Mat &inputMat, vector<float>& hogFeatureVec
 	for (int blockY = 0; blockY <= inputMat.rows / _hogFeatureParameter->cellSize.height - cellsInBlock; blockY++)
 	{
 		for (int blockX = 0; blockX <= inputMat.cols / _hogFeatureParameter->cellSize.width - cellsInBlock; blockX++)
-		{
-			Mat test(inputMat.size(), CV_8UC3, Scalar(0, 0, 0));
-
+		{			
 			//歸一化範圍
 			float blockSum = 0;
 			for (int innerBlockY = 0; innerBlockY < cellsInBlock; innerBlockY++)
 			{
 				for (int innerBlockX = 0; innerBlockX < cellsInBlock; innerBlockX++)
 				{					
-					cout << ((blockY + innerBlockY) * widthStep + (blockX + innerBlockX))*_hogFeatureParameter->nbins << endl;					
+					//cout << ((blockY + innerBlockY) * widthStep + (blockX + innerBlockX))*_hogFeatureParameter->nbins << endl;					
 					for (int index = 0; index < _hogFeatureParameter->nbins; index++)
 					{						
 						float tempValue = hogFeatureVector.at(((blockY + innerBlockY) * widthStep + (blockX + innerBlockX)) *_hogFeatureParameter->nbins + index);
@@ -266,7 +264,7 @@ void HogFeature::normalizeHogFeature(Mat &inputMat, vector<float>& hogFeatureVec
 					}					
 				}
 			}
-			cout << endl;
+			//cout << endl;
 			float scale = 1.f / (sqrtf(blockSum) + 1e-3f);//改良區塊?
 
 			//只對block裡的4個cell做歸一化?
@@ -274,7 +272,7 @@ void HogFeature::normalizeHogFeature(Mat &inputMat, vector<float>& hogFeatureVec
 			{
 				for (int innerBlockX = 0; innerBlockX < cellsInBlock; innerBlockX++)
 				{
-					cout <<"nor::"<< ((blockY + innerBlockY) * widthStep + (blockX + innerBlockX)) * _hogFeatureParameter->nbins << endl;
+					//cout <<"nor::"<< ((blockY + innerBlockY) * widthStep + (blockX + innerBlockX)) * _hogFeatureParameter->nbins << endl;
 					for (int index = 0; index < _hogFeatureParameter->nbins; index++)
 					{												
 						normalizedFeature[normalizedFeatureIndex] = hogFeatureVector.at(((blockY + innerBlockY) * widthStep + (blockX + innerBlockX)) * _hogFeatureParameter->nbins + index) * scale;
@@ -304,14 +302,6 @@ void HogFeature::calculateHogFeature(Mat &inputMat, vector<float> &returnHogFeat
 	{
 		for (int globalX = 0; globalX <= (inputMat.cols - _hogFeatureParameter->cellSize.width); globalX += _hogFeatureParameter->cellSize.width)
 		{
-			/*cout << vectorIndex << endl;
-			Mat test(inputMat.size(), CV_8UC3, Scalar(0, 0, 0));
-			for (int height = globalY; height<globalY + 8; height++)
-				for (int width = globalX; width<globalX + 8; width++)
-					test.at<Vec3b>(height, width)[0] = 255;
-			imshow("test", test);
-			waitKey(0);*/
-
 			//calculateOrientation求論文中的M0
 			calculateOrientation(x_Residuals, y_Residuals, hogFeatureVector, globalX, globalY, vectorIndex);
 			vectorIndex += _hogFeatureParameter->nbins;		
@@ -327,7 +317,6 @@ void HogFeature::calculateHogFeature(Mat &inputMat, vector<float> &returnHogFeat
 //?
 void HogFeature::getWindowBlocks(Mat &frame, vector<float> &hogFeatures, int &index_X, int &index_Y, vector<float> &returnFeature, float &trainScale)
 {
-
 	int X_Blocks_Num = (_hogFeatureParameter->winSize.width* trainScale) / _hogFeatureParameter->cellSize.width;
 	int Y_Blocks_Num = (_hogFeatureParameter->winSize.height * trainScale) / _hogFeatureParameter->cellSize.height;
 	int stratX = index_X / _hogFeatureParameter->cellSize.width;

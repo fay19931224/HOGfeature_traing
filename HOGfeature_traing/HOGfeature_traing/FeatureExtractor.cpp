@@ -8,8 +8,8 @@ FeatureExtractor::FeatureExtractor()
 	_winSize = Size(72, 104);*/
 
 	
-	dir = "機車正背面/";
-	_hogFeature->winSize = Size(48, 104);
+	/*dir = "機車正背面/";
+	_hogFeature->winSize = Size(48, 104);*/
 	
 	
 	/*dir = "機車側面全身/";
@@ -57,7 +57,7 @@ FeatureExtractor::FeatureExtractor(string modelFileName)
 		ss.clear();
 		ss << token.substr(token.find(",")+1, token.size());
 		ss >> height;
-		_hogFeature->winSize = Size(width, height);
+		_hogFeature->winSize = Size(width, height);		
 		cout <<"winSize:"<< width <<","<<height<< endl;		
 	}
 	if (getline(modelFile, temp))
@@ -211,7 +211,7 @@ const HogFeatureParameter * FeatureExtractor::getHogFeature()
 
 Mat FeatureExtractor::ExtractorPositiveSample()
 {	                	
-	string path = "pos/" + dir;
+	string path = "pos/" + dir+"/";
 	ifstream ifs(path + "000positive.txt", ios::in);
 	//vector<vector<Point>> locationList;
 	vector<vector<float>> descriptorValueList;
@@ -274,7 +274,7 @@ Mat FeatureExtractor::ExtractorPositiveSample()
 
 Mat FeatureExtractor::ExtractorNegativeSample()
 {
-	string path = "neg\\"+dir;
+	string path = "neg\\"+dir+"\\";
 	
 	ifstream ifs(path + "\\000negative.txt", ios::in);
 	//vector<vector<Point>> locationList;
@@ -308,23 +308,11 @@ Mat FeatureExtractor::ExtractorNegativeSample()
 				system("PAUSE");
 				continue;
 			}
-			else {
-				//cout << fileName << endl;
-			}
-			//resize(img, img, WINDOW_SIZE);
-			//imshow("img", img);
-			//waitKey(0);			
-		
-			vector<float> descriptorValue;
-			//_descriptor->compute(img, descriptorValue, _winSize, _cellSize);
+	
+			vector<float> descriptorValue;		
 			_descriptor->compute(img, descriptorValue);
 			descriptorValueList.push_back(descriptorValue);
-			//cout << descriptorValue.size() << endl;
-			/*for (int i = 0; i<descriptorValue.size(); i++)
-			{
-				fp << descriptorValue[i] << ",";
-			}
-			fp << endl;*/
+			
 		}
 	}
 	//fp.close();//關閉檔案	
@@ -357,7 +345,7 @@ Mat FeatureExtractor::ShowHOGFeature(string fileName)
 	cv::imshow("Visualization before", visualization);
 	cv::moveWindow("Visualization before", 500, 500);
 
-	vector<float> features_new;
+	/*vector<float> features_new;
 	_descriptor = new HOGDescriptor(_hogFeature->winSize, _hogFeature->blockSize, 
 		_hogFeature->blockStride, _hogFeature->cellSize, _hogFeature->nbins,
 		_hogFeature->derivAperture, _hogFeature->winSigma, 0,
@@ -375,7 +363,7 @@ Mat FeatureExtractor::ShowHOGFeature(string fileName)
 	Mat visualization_new = get_hogdescriptor_visu(imread(fileName, 1), features_new, _hogFeature->winSize);
 	
 	cv::imshow("Visualization after", visualization_new);
-	cv::moveWindow("Visualization after", 750, 500);
+	cv::moveWindow("Visualization after", 750, 500);*/
 	cv::waitKey();
 	return pic;
 }
@@ -539,10 +527,12 @@ Mat FeatureExtractor::get_hogdescriptor_visu(const Mat& color_origImg, vector<fl
 
 } // get_hogdescriptor_visu
 
-void FeatureExtractor::loadTrainingData(string posPath,string negPath)
+void FeatureExtractor::loadTrainingData()
 {		
 	//load pos data
-	ifstream ifs(posPath + "000positive.txt", ios::in);
+	string posPath = "pos/" + dir + "/";
+	ifstream ifs(posPath+"000positive.txt", ios::in);
+	//ifstream ifs("pos/moto/000positive.txt", ios::in);
 	if (!ifs.is_open())
 	{
 		throw exception("open POS data fail");		
@@ -553,31 +543,36 @@ void FeatureExtractor::loadTrainingData(string posPath,string negPath)
 		getline(ifs, fileName);
 		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
 		{			
-			Mat img = imread(posPath + fileName, IMREAD_GRAYSCALE);
+			Mat img = imread(posPath +fileName, IMREAD_GRAYSCALE);
 			if (img.empty())
 			{
 				cout << fileName << " error" << endl;
 				throw exception("load POS data fail");				
 			}					
+			//cout << fileName << endl;			
 			PosTrainingData.push_back(img);			
 			flip(img, img, 1);			
 			PosTrainingData.push_back(img);
+			waitKey(1);
 		}
 	}
 	ifs.close();
 	cout << "load POS data success" << endl;
 
 	//load neg data
+	string negPath = "neg/" + dir + "/";
 	ifs.open(negPath + "000negative.txt", ios::in);
 	if (!ifs.is_open())
 	{
 		throw exception("open NEG data fail");
 	}
+	int i = 0;
 	while (!ifs.eof())
 	{
 		string fileName;
 		getline(ifs, fileName);
-		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		i++;
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt"&&i%10==0)
 		{
 			Mat img = imread(negPath + fileName, IMREAD_GRAYSCALE);
 			if (img.empty())
@@ -636,15 +631,16 @@ void FeatureExtractor::extractSample()
 }
 
 void FeatureExtractor::run()
-{	
-	string posPath = "pos/" + dir;
-	string negPath = "neg/" + dir;
-	loadTrainingData(posPath, negPath);
-	double t = (double)cv::getTickCount();
+{			
+	loadTrainingData();
+	
+	unsigned long start = clock();
 	runTrainProcessOpenCV();
-	//runTrainProcess();
-	t = (double)cv::getTickCount() - t;	
-	cout << "Spending time:" <<t<< endl;
+	unsigned long end = clock();
+	
+	printf("total Spending time=%1.3f seconds\n", (end - start) / 1000.0);
+	
+	//runTrainProcess();	
 }
 
 //void FeatureExtractor::runTrainProcess()
@@ -720,8 +716,7 @@ void FeatureExtractor::run()
 //}
 
 void FeatureExtractor::runTrainProcessOpenCV()
-{	
-	
+{		
 	cout << "run OpenCV version" << endl;
 	
 	if (cv::useOptimized()) 
@@ -739,36 +734,24 @@ void FeatureExtractor::runTrainProcessOpenCV()
 	if (cuda::getCudaEnabledDeviceCount()) 
 	{
 		cout << "OpenCV with cuda" << endl;
-	}
-	//_descriptor = new HOGDescriptor(_hogFeature->winSize, _hogFeature->blockSize, _hogFeature->blockStride, _hogFeature->cellSize, _hogFeature->nbins, _hogFeature->derivAperture, _hogFeature->winSigma, _hogFeature->histogramNormType, _hogFeature->L2HysThreshold, _hogFeature->gammaCorrection, _hogFeature->nlevels, _hogFeature->signedGradient);
-	_descriptor->setVersion(true);	 
+	}	
+	//_descriptor->setVersion(true);	 
+	_descriptor->setVersion(false);
+	
+
 	std::cout << "Start to computing orientation and magnitude" << std::endl;
+	
 	for (int i = 0;i<PosTrainingData.size(); i++) 
-	{	
-		
+	{					
+		//double t = (double)cv::getTickCount();
 		vector<float> descriptorValue;
-		
-		double t = (double)cv::getTickCount();
-
-		/*UMat U = PosTrainingData[i].getUMat(1);
-		InputArray temp = U;
-		if (temp.dims() <= 2 && temp.type() == CV_8UC1&&temp.isUMat()) 
-		{
-			cout << "OCL" << endl;
-		}
-		else
-		{
-			cout << "NO OCL" << endl;
-		}			
-		_descriptor->compute(temp, descriptorValue);*/
-
-		_descriptor->compute(PosTrainingData[i], descriptorValue);				
-		t = (double)cv::getTickCount() - t;
-		//cout << "Spend Time:"<<t/getTickFrequency() <<"s"<< endl;		
+		_descriptor->compute(PosTrainingData[i], descriptorValue);								
+		//t = (double)cv::getTickCount() - t;
+		//cout << "Spend Time:"<<t/getTickFrequency() <<"s"<< endl;	
 		descriptorValueList.push_back(descriptorValue);		
 	}
-	int row = descriptorValueList.size();
-	int col = descriptorValueList[0].size();
+	int row = descriptorValueList.size();//樣本數
+	int col = descriptorValueList[0].size();//單一樣本維度
 	
 	Mat positive(row, col, CV_32F);
 	/*------------
@@ -785,12 +768,30 @@ void FeatureExtractor::runTrainProcessOpenCV()
 	
 	descriptorValueList.clear();
 
+	
 	for (int i = 0; i<NegTrainingData.size(); i++)
-	{
-		vector<float> descriptorValue;		
-		_descriptor->compute(NegTrainingData[i], descriptorValue);			
-		descriptorValueList.push_back(descriptorValue);
+	{		
+		if (dir.compare("行人")==0) 
+		{
+			for (int height = 0; height <NegTrainingData[i].rows - _hogFeature->winSize.height; height += _hogFeature->winSize.height / 2)
+			{
+				for (int width = 0; width<NegTrainingData[i].cols - _hogFeature->winSize.width; width += _hogFeature->winSize.width / 2)
+				{
+					vector<float> descriptorValue;
+					Rect roi = Rect(width, height, _hogFeature->winSize.width, _hogFeature->winSize.height);
+					_descriptor->compute(NegTrainingData[i](roi), descriptorValue);
+					descriptorValueList.push_back(descriptorValue);
+				}
+			}
+		}
+		else 
+		{
+			vector<float> descriptorValue;
+			_descriptor->compute(NegTrainingData[i], descriptorValue);
+			descriptorValueList.push_back(descriptorValue);
+		}				
 	}
+
 	row = descriptorValueList.size();
 	col = descriptorValueList[0].size();
 	Mat negative(row, col, CV_32F);
@@ -812,7 +813,7 @@ void FeatureExtractor::runTrainProcessOpenCV()
 	positive.release();
 	negative.release();
 
-	string filename = "側面05251_auto";
+	string filename = "helmet0818_auto";
 	svm = ml::SVM::create();
 	svm->setKernel(cv::ml::SVM::KernelTypes::LINEAR);
 	Ptr<ml::TrainData> data = ml::TrainData::create(trainingDataMat, ml::SampleTypes::ROW_SAMPLE, dataProperty);
@@ -820,7 +821,7 @@ void FeatureExtractor::runTrainProcessOpenCV()
 	
 	svm->save(filename + ".xml");
 	writeTrainingParameter(filename);
-	//	_descriptor->save();	
+		//_descriptor->save(filename);
 	std::cout << "svm training is done!" << std::endl;	
 }
 
@@ -869,6 +870,38 @@ Mat FeatureExtractor::fillTrainingLabel()
 		label[i] = -1.0;
 	}
 	return Mat(num_total_files, 1, CV_32FC1, label);
+}
+
+void FeatureExtractor::flipImage()
+{
+	//load pos data
+	string posPath = "pos/" + dir + "/";
+	string destination = "pos/行人加入水平翻轉/";
+	ifstream ifs(posPath + "000positive.txt", ios::in);	
+	if (!ifs.is_open())
+	{
+		throw exception("open POS data fail");
+	}
+
+	while (!ifs.eof())
+	{
+		string fileName;
+		getline(ifs, fileName);
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		{
+			Mat img = imread(posPath + fileName);
+			if (img.empty())
+			{
+				cout << fileName << " error" << endl;
+				throw exception("load POS data fail");
+			}
+			//cout << fileName << endl;	
+			imwrite(destination+"+" +fileName, img);
+			flip(img, img, 1);
+			imwrite(destination +"-" + fileName, img);
+		}
+	}
+	ifs.close();
 }
 
 void FeatureExtractor::writeTrainingParameter(string fileName)
@@ -921,6 +954,209 @@ void FeatureExtractor::writeTrainingParameter(string fileName)
 	fp << "負樣本數:" << NegTrainingData.size() << setw(space) << endl;
 
 	fp.close();//關閉檔案	
+}
+
+void FeatureExtractor::KFoldCrossValidation(int k)
+{
+	vector<vector<vector<float>>> allPosData;	
+	vector<vector<Mat>> allPosDataMat;
+	vector<vector<float>> NegData;
+	for (int i = 0; i < k; i++)
+	{
+		vector<vector<float>> data;
+		allPosData.push_back(data);
+		vector<Mat> dataMat;
+		allPosDataMat.push_back(dataMat);
+	}
+
+	//load pos data
+	string posPath = "pos/"+dir+"加入水平翻轉/";
+	
+	ifstream ifs(posPath + "+000positive.txt", ios::in);
+	int count = 0;	
+
+	if (!ifs.is_open())
+	{
+		throw exception("open POS data fail");
+	}
+	
+	while (!ifs.eof())
+	{
+		string fileName;
+		getline(ifs, fileName);
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		{
+			Mat img = imread(posPath + fileName, IMREAD_GRAYSCALE);			
+			if (img.empty())
+			{
+				cout << fileName << " error" << endl;
+				throw exception("load POS data fail");
+			}
+			//cout << fileName << endl;
+			vector<float> descriptorValue;
+			allPosDataMat[count].push_back(img);
+
+			_descriptor->compute(img, descriptorValue);			
+			allPosData[count].push_back(descriptorValue);			
+			count++;
+			if (count == k)
+				count = 0;			
+		}
+	}
+	ifs.close();
+
+	//cout << "Sum of data:" <<<< endl;
+	for (int i = 0; i < k; i++)
+	{		
+		cout <<"Data "<<i<<"'s sum:"<< allPosData[i].size() << endl;
+	}
+	
+	cout << "load POS data and divide data success" << endl;
+
+	//load neg data
+	string negPath = "neg/" + dir + "/";
+	ifs.open(negPath + "000negative.txt", ios::in);
+	if (!ifs.is_open())
+	{
+		throw exception("open NEG data fail");
+	}
+	int i = 0;
+	while (!ifs.eof())
+	{
+		string fileName;
+		getline(ifs, fileName);
+		i++;
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt"&&i % 10 == 0)
+		{
+			Mat img = imread(negPath + fileName, IMREAD_GRAYSCALE);
+			if (img.empty())
+			{
+				cout << fileName << " error" << endl;
+				throw exception("load NEG data fail");
+			}
+
+			vector<float> descriptorValue;
+
+			if (dir == "行人") 
+			{			
+				for (int height = 0; height <img.rows - _hogFeature->winSize.height; height += _hogFeature->winSize.height / 2)
+				{
+					for (int width = 0; width<img.cols - _hogFeature->winSize.width; width += _hogFeature->winSize.width / 2)
+					{
+						Rect roi = Rect(width, height, _hogFeature->winSize.width, _hogFeature->winSize.height);
+						_descriptor->compute(img(roi), descriptorValue);
+						NegData.push_back(descriptorValue);
+					}
+				}
+			}
+			else 
+			{
+				_descriptor->compute(img, descriptorValue);
+				NegData.push_back(descriptorValue);
+			}			
+		}
+	}
+	ifs.close();
+	cout << "load NEG data success" << endl;
+	
+
+	//i作為測試資料 i以外的為訓練資料
+	for (int i = 0; i < k; i++)
+	{
+		vector<vector<float>> trainData;
+		//vector<vector<float>> testData;
+		vector<Mat> testData;
+
+		//分割測試集與訓練集
+		int row = 0;
+		for (int j = 0; j < k; j++)
+		{
+			if (j == i) 
+			{
+				testData = allPosDataMat[j];
+				continue;
+			}
+				
+			row += allPosData[j].size();
+			trainData.insert(trainData.end(), allPosData[j].begin(), allPosData[j].end());
+			
+		}
+		stringstream s;
+		s << i;
+
+		string featureName = "KFOLD//" + dir + "//"+s.str()+".xml";
+		
+		PrimalSVM* primalSVM;
+		try {
+			primalSVM = new PrimalSVM(featureName);
+			cout << "start verify"<<featureName << endl;
+			fstream fp;
+			fp.open("KFOLD//" + dir + "//"+ dir +"KFOLD.txt", ios::app);//開啟檔案
+
+			vector<float> hogVector;
+			primalSVM->getSupportVector(hogVector);			
+			_descriptor->setSVMDetector(hogVector);
+			double sumOfMiss = 0.0;
+			for (int j = 0; j<testData.size(); j++)
+			{
+				vector< Point > foundLocations;
+				_descriptor->detect(testData[j], foundLocations);
+				if (foundLocations.size() == 0) 
+				{
+					sumOfMiss+=1.0;
+				}				
+			}
+			double accuracy = 1.0 - sumOfMiss / (double)testData.size();
+			fp << i << "accuracy :" << accuracy << endl;
+			cout <<i<<"accuracy :"<< accuracy << endl;
+		}
+		catch(Exception e)
+		{
+			
+			//cout << trainData .size()<< endl;
+			//cout << testData.size() << endl;
+			int col = trainData[0].size();
+
+			Mat positive(row, col, CV_32F);
+			for (int j = 0; j < row; j++)
+			{
+				memcpy(&(positive.data[col*j * sizeof(float)]), trainData[j].data(), col * sizeof(float));
+			}
+
+			row = NegData.size();
+			col = NegData[0].size();
+			Mat negative(row, col, CV_32F);
+			for (int i = 0; i < row; i++)
+			{
+				memcpy(&(negative.data[col*i * sizeof(float)]), NegData[i].data(), col * sizeof(float));
+			}
+
+			Mat trainingDataMat(positive.rows + negative.rows, positive.cols, CV_32FC1);
+			//將正樣本資料放入mixData
+			memcpy(trainingDataMat.data, positive.data, sizeof(float)*positive.rows*positive.cols);
+			//將負樣本資料放入mixData
+			memcpy(&trainingDataMat.data[sizeof(float)*positive.rows*positive.cols], negative.data, sizeof(float)*negative.rows*negative.cols);
+			Mat dataProperty(positive.rows + negative.rows, 1, CV_32SC1, Scalar(-1.0));
+			dataProperty.rowRange(0, positive.rows) = Scalar(1.0);
+			std::cout << "Start to training" << std::endl;
+
+			positive.release();
+			negative.release();
+			stringstream s;
+			s << i;
+			string filename = "KFOLD//" + dir + "//" + s.str();
+			svm = ml::SVM::create();
+			svm->setKernel(cv::ml::SVM::KernelTypes::LINEAR);
+			Ptr<ml::TrainData> data = ml::TrainData::create(trainingDataMat, ml::SampleTypes::ROW_SAMPLE, dataProperty);
+			svm->trainAuto(data);
+
+			svm->save(filename + ".xml");
+			writeTrainingParameter(filename);			
+			std::cout << "svm training " << i << " is done!" << std::endl;
+		}		
+	}	
+	
+	std::cout << "svm training all done!" << std::endl;
 }
 
 void FeatureExtractor::runTrainProcess()
@@ -978,21 +1214,22 @@ void FeatureExtractor::runTrainProcess()
 		int row, col;
 		for (int i = 0; i<PosTrainingData.size(); i++)
 		{			
-			/*vector<float> descriptorValue;
+			vector<float> descriptorValue;
 			clock_t t;
 			t = clock();
 			mHog.calculateHogFeature(PosTrainingData[i], descriptorValue);
 			t = clock() - t;
 			printf("It took me %d clicks (%f seconds).\n", t, ((float)t) / CLOCKS_PER_SEC);
-			descriptorValueList.push_back(descriptorValue);*/
-
-			
-			vector<float> descriptorValue;
-			//double t = (double)cv::getTickCount();
-			mHog.calculateHogFeature(PosTrainingData[i], descriptorValue);						
-			//t = (double)cv::getTickCount() - t;
-			//cout << "Spend Time:" << t << endl;
 			descriptorValueList.push_back(descriptorValue);
+			imshow("test", PosTrainingData[i]);
+			waitKey(0);
+			/*vector<float> descriptorValue;
+			double t = (double)cv::getTickCount();
+			mHog.calculateHogFeature(PosTrainingData[i], descriptorValue);						
+			t = (double)cv::getTickCount() - t;
+			cout << "Spend Time:" << t << endl;
+			descriptorValueList.push_back(descriptorValue);*/
+			//cin.get();
 		}
 		row = descriptorValueList.size();
 		col = descriptorValueList[0].size();
@@ -1041,4 +1278,325 @@ void FeatureExtractor::runTrainProcess()
 		writeTrainingParameter(filename);
 	}
 	std::cout << "svm training is done!" << std::endl;
+}
+
+void FeatureExtractor::verifyNewHOG()
+{
+	PrimalSVM* primalSVM;	
+	
+	primalSVM = new PrimalSVM("pedestrianFeature.xml");
+	//primalSVM = new PrimalSVM("ped0626_auto.xml");
+		
+	vector<float> hogVector;
+	primalSVM->getSupportVector(hogVector);
+	_descriptor->setVersion(false);
+	_descriptor->setCache(false);
+	_descriptor->setSVMDetector(hogVector);
+
+	//load pos data
+	string path = "testPic/";
+	ifstream ifs("compare/"+path + "000positive.txt", ios::in);
+	//ifstream ifs("pos/moto/000positive.txt", ios::in);
+	if (!ifs.is_open())
+	{
+		throw exception("open POS data fail");
+	}
+	int count = 0;
+	double sum = 0.0;
+	while (!ifs.eof())
+	{
+		string fileName;
+		getline(ifs, fileName);
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		{
+			Mat img = imread("compare/" + path + "/" + fileName);
+			Mat grayImg;
+			if (img.empty())
+			{
+				cout << fileName << " error" << endl;
+				throw exception("load POS data fail");
+			}
+
+			//cout << fileName << endl;			
+			cvtColor(img, grayImg, CV_BGR2GRAY);
+			vector<Rect> result;
+			unsigned long start = clock();
+			_descriptor->detectMultiScale(grayImg, result, 0.0, Size(8, 8), Size(), 1.05, 2.0,false);
+			unsigned long end = clock();
+			count++;
+			sum += ((end - start) / 1000.0);
+			printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
+			
+			for (int i = 0; i<result.size(); i++)
+			{
+				cv::rectangle(img, result[i], cv::Scalar(255, 0, 0), 2);
+			}			;
+			//cv::imshow("image", img);
+			//cv::waitKey(0);
+			cv::imwrite("compare/preresult/"+fileName+".jpg", img);			
+		}
+	}
+	ifs.close();	
+
+}
+
+void FeatureExtractor::verifyHelmet()
+{
+	enum detectType
+	{
+		HOGSVM,
+		HOUGH
+	};
+		
+	int type = HOGSVM;
+
+	PrimalSVM* primalSVM;
+	primalSVM = new PrimalSVM("helmet0818_auto.xml");
+	
+	vector<float> hogVector;
+	primalSVM->getSupportVector(hogVector);
+	_descriptor->setVersion(false);
+	_descriptor->setCache(false);
+	_descriptor->setSVMDetector(hogVector);
+
+
+	//string path = "pos/機車正背面";
+	//ifstream ifs(path + "/000positive.txt", ios::in);	
+	//if (!ifs.is_open())
+	//{
+	//	throw exception("open POS data fail");
+	//}
+	//int count = 0;
+	//double sum = 0.0;
+	//while (!ifs.eof())
+	//{
+	//	string fileName;
+	//	getline(ifs, fileName);
+	//	if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+	//	{
+	//		Mat img = imread(path + "/" + fileName);
+	//		Mat grayImg;
+	//		if (img.empty())
+	//		{
+	//			std::cout << fileName << " error" << std::endl;
+	//			throw exception("load POS data fail");
+	//		}
+	//		//cout << fileName << endl;		
+
+	//		
+
+	//		resize(img, img, Size(), 1.4, 1.4);
+	//		cvtColor(img, grayImg, CV_BGR2GRAY);
+
+	//		Rect roi = checkROI(grayImg,"正背面");
+	//		
+	//		if(type==HOUGH)
+	//		{
+	//			Head head;				
+	//			unsigned long start = clock();
+	//			detectedHeadHoughCircles(grayImg(roi), &head);
+	//			unsigned long end = clock();
+	//			count++;
+	//			sum += ((end - start) / 1000.0);
+	//			circle(img(roi), head.center, head.radius, Scalar(0, 255, 0),3);
+	//			printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
+	//		//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
+	//			cv::imwrite("helmetResult/hough/" + fileName + ".jpg", img);
+	//		}
+	//		else  if(type == HOGSVM)
+	//		{
+	//			vector<Rect> result;
+	//			vector<double> resultWeight;
+	//			unsigned long start = clock();
+	//			_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.8, Size(1, 1), Size(), 1.01, 2.0, false);				
+	//			int Max = INT32_MIN;
+	//			int maxIndex = -1;
+	//			for (int i = 0; i<resultWeight.size(); i++)
+	//			{
+	//				if (resultWeight[i] > Max)
+	//				{
+	//					Max = resultWeight[i];
+	//					maxIndex = i;
+	//				}
+	//			}
+	//			
+	//			unsigned long end = clock();
+	//			count++;
+	//			sum += ((end - start) / 1000.0);
+	//			printf("total time=%1.3f seconds\n", (end - start) / 1000.0);				
+	//			if (maxIndex != -1)
+	//			{
+	//				cv::rectangle(img(roi), result[maxIndex], cv::Scalar(255, 0, 0), 2);
+	//			}
+	//		//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
+	//			//cv::imshow("image", img);
+	//			//cv::waitKey(0);
+	//			cv::imwrite("helmetResult/hogsvm/" + fileName + ".jpg", img);
+	//		}			
+	//	}
+	//}
+	//ifs.close();
+
+	string path2 = "pos/機車側面全身";
+	ifstream ifs2(path2 + "/000positive.txt", ios::in);
+	if (!ifs2.is_open())
+	{
+		throw exception("open POS data fail");
+	}
+	
+	while (!ifs2.eof())
+	{
+		string fileName;
+		getline(ifs2, fileName);
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		{
+			Mat img = imread(path2 + "/" + fileName);
+			Mat grayImg;
+			if (img.empty())
+			{
+				cout << fileName << " error" << endl;
+				throw exception("load POS data fail");
+			}
+			//cout << fileName << endl;		
+			resize(img, img, Size(), 1.6, 1.6);
+			cvtColor(img, grayImg, CV_BGR2GRAY);
+
+			Rect roi = checkROI(grayImg, "側面");
+
+			if (type == HOUGH)
+			{
+				Head head;				
+				unsigned long start = clock();
+				detectedHeadHoughCircles(grayImg(roi), &head);
+				unsigned long end = clock();
+				/*count++;
+				sum += ((end - start) / 1000.0);*/
+				circle(img(roi), head.center, head.radius, Scalar(0, 255, 0),3);
+				printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
+			//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
+				cv::imwrite("helmetResult/hough2/" + fileName + ".jpg", img);
+			}
+			else  if(type == HOGSVM)
+			{
+				vector<Rect> result;
+				vector<double> resultWeight;
+				unsigned long start = clock();
+				_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.8, Size(1, 1), Size(), 1.01, 2.0, false);				
+				int Max = INT32_MIN;
+				int maxIndex = -1;
+				for (int i = 0; i<resultWeight.size(); i++)
+				{
+					if (resultWeight[i] > Max)
+					{
+						Max = resultWeight[i];
+						maxIndex = i;
+					}
+				}
+				
+				unsigned long end = clock();
+				/*count++;
+				sum += ((end - start) / 1000.0);*/
+				printf("total time=%1.3f seconds\n", (end - start) / 1000.0);				
+				if (maxIndex != -1)
+				{
+					cv::rectangle(img(roi), result[maxIndex], cv::Scalar(255, 0, 0), 2);
+				}
+			//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
+				//cv::imshow("image", img);
+				//cv::waitKey(0);
+				cv::imwrite("helmetResult/hogsvm2/" + fileName + ".jpg", img);
+			}			
+		}
+	}
+	ifs2.close();
+
+}
+
+Rect FeatureExtractor::checkROI(Mat frame,string type)
+{	
+	int x;
+	int y;
+	int width;
+	int height;
+
+	if (type.compare("正背面") == 0)
+	{
+		x = 0;
+		y = 0;
+		width = frame.cols;
+		height = frame.rows / 3;
+	}
+	if (type.compare("側面") == 0) 
+	{
+		x = frame.cols / 5;
+		y = 0;
+		width = frame.cols * 3 / 5;
+		height = frame.rows*3/ 10;
+	}	
+	return Rect(x, y, width, height);
+}
+
+bool FeatureExtractor::detectedHeadHoughCircles(Mat grayFrame, Head * head)
+{
+	Mat sample = grayFrame;
+	vector<cv::Vec3f> circles;
+	double dp = 1.0;
+	double minDist = sample.rows;
+	if (sample.rows < sample.cols)
+	{
+		minDist = sample.cols;
+	}
+	double param1 = 100;
+	double param2 = 15;
+	int minRadius = sample.cols / 5;
+	int maxRadius = sample.cols / 3;
+	if (sample.cols > sample.rows)
+	{
+		minRadius = sample.rows / 5;
+		maxRadius = sample.rows / 3;
+	}
+	HoughCircles(sample, circles, CV_HOUGH_GRADIENT, dp, minDist, param1, param2, minRadius, maxRadius);
+	if (circles.size() != 0)
+	{
+		cv::Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
+		int radius = cvRound(circles[0][2]);
+		head->center = center;
+		head->radius = radius;
+		return true;
+	}
+
+	Mat sample2 = grayFrame;
+	Mat dst;
+	Sobel(sample2, dst, CV_8U, 1, 1);
+	Mat abs_dst;
+	convertScaleAbs(dst, abs_dst);
+	Mat add_dst;
+	addWeighted(sample2, 1, abs_dst, -1, CV_8U, add_dst);
+	double dp2 = 1;
+	double minDist2 = sample2.rows;
+	if (sample2.rows < sample2.cols)
+	{
+		minDist2 = sample2.cols;
+	}
+	double param12 = 50;
+	double param22 = 5;
+	int minRadius2 = sample.cols / 5;
+	int maxRadius2 = sample.cols / 3;
+	if (sample.cols > sample.rows)
+	{
+		minRadius2 = sample.rows / 5;
+		maxRadius2 = sample.rows / 3;
+	}
+	vector<cv::Vec3f> circles2;
+	HoughCircles(add_dst, circles2, CV_HOUGH_GRADIENT, dp2, minDist2, param12, param22, minRadius2, maxRadius2);
+
+	if (circles2.size() != 0)
+	{
+		cv::Point center(cvRound(circles2[0][0]), cvRound(circles2[0][1]));
+		int radius = cvRound(circles2[0][2]);
+		head->center = center;
+		head->radius = radius;
+		return true;
+	}
+	return false;
 }
