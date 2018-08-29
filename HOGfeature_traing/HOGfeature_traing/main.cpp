@@ -7,7 +7,7 @@
 #include <opencv2\imgproc\imgproc.hpp>
 #include <time.h>
 #include "FeatureExtractor.h"
-#include "Trainer.h"
+
 
 void randomProduceSample()
 {
@@ -62,13 +62,16 @@ int main()
 	//string trainingImformation = "HOG參數檔/機車正背面.txt";
 	//string trainingImformation = "HOG參數檔/行人.txt";
 	string trainingImformation = "HOG參數檔/安全帽.txt";
-	FeatureExtractor* extractor = new FeatureExtractor(trainingImformation);	
-	Trainer trainer(extractor);
+	FeatureExtractor* extractor = new FeatureExtractor(trainingImformation);
 
-	//extractor->ShowHOGFeature("pos/機車正背面/videoData1202_2  (69).jpg");
-	//extractor->ShowHOGFeature("pos/行人/pos358.jpg");
-	//extractor->ShowHOGFeature("pos/機車側面全身/videoData1202_6 (30).jpg");
-	trainer.runTrainProcess(); 
-	
+	//extractor->run();
+
+
+	//extractor->verifyHelmet();
+	//extractor->verifyNewHOG();
+	//extractor->merge();
+	//extractor->flipImage();
+	//extractor->KFoldCrossValidation(10);
+
 	system("pause");
 }

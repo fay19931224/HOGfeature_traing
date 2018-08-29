@@ -245,10 +245,13 @@ ModelManifest.xml
 *.jpg
 *.txt
 *.png
-
+*.bmp
+*.bat
 # xml
 *.xml
 
 /HOGfeature_traing/HOGfeature_traing/學長版本
 /HOGfeature_traing/HOGfeature_traing/舊版特徵
 /HOGfeature_traing/HOGfeature_traing/舊版特徵
+/HOGfeature_traing/HOGfeature_traing/pos/GH010124/pos/Thumbs.db
+/HOGfeature_traing/HOGfeature_traing/pos/GH010129/pos/Thumbs.db

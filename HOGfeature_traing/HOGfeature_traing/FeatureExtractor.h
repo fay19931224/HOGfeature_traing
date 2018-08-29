@@ -1,6 +1,7 @@
 ﻿#ifndef FEATURE_EXTRACTOR_H
 #define FEATURE_EXTRACTOR_H
 
+
 #include <string>
 #include <fstream>
 #include <opencv2\opencv.hpp>
@@ -61,6 +62,8 @@ public:
 		double radius;
 	};
 	bool detectedHeadHoughCircles(Mat grayFrame, Head * head);
+
+	void merge();
 };
 
 #endif

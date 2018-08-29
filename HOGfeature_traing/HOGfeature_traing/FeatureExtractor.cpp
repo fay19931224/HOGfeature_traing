@@ -58,6 +58,7 @@ FeatureExtractor::FeatureExtractor(string modelFileName)
 		ss << token.substr(token.find(",")+1, token.size());
 		ss >> height;
 		_hogFeature->winSize = Size(width, height);		
+		//_hogFeature->winSize = Size(width, 128);
 		cout <<"winSize:"<< width <<","<<height<< endl;		
 	}
 	if (getline(modelFile, temp))
@@ -813,7 +814,7 @@ void FeatureExtractor::runTrainProcessOpenCV()
 	positive.release();
 	negative.release();
 
-	string filename = "helmet0818_auto";
+	string filename = "helmet0827_auto";
 	svm = ml::SVM::create();
 	svm->setKernel(cv::ml::SVM::KernelTypes::LINEAR);
 	Ptr<ml::TrainData> data = ml::TrainData::create(trainingDataMat, ml::SampleTypes::ROW_SAMPLE, dataProperty);
@@ -876,7 +877,7 @@ void FeatureExtractor::flipImage()
 {
 	//load pos data
 	string posPath = "pos/" + dir + "/";
-	string destination = "pos/行人加入水平翻轉/";
+	string destination = "pos/"+dir+"加入水平翻轉/";
 	ifstream ifs(posPath + "000positive.txt", ios::in);	
 	if (!ifs.is_open())
 	{
@@ -995,7 +996,7 @@ void FeatureExtractor::KFoldCrossValidation(int k)
 			//cout << fileName << endl;
 			vector<float> descriptorValue;
 			allPosDataMat[count].push_back(img);
-
+			
 			_descriptor->compute(img, descriptorValue);			
 			allPosData[count].push_back(descriptorValue);			
 			count++;
@@ -1111,8 +1112,7 @@ void FeatureExtractor::KFoldCrossValidation(int k)
 			cout <<i<<"accuracy :"<< accuracy << endl;
 		}
 		catch(Exception e)
-		{
-			
+		{			
 			//cout << trainData .size()<< endl;
 			//cout << testData.size() << endl;
 			int col = trainData[0].size();
@@ -1284,32 +1284,47 @@ void FeatureExtractor::verifyNewHOG()
 {
 	PrimalSVM* primalSVM;	
 	
-	primalSVM = new PrimalSVM("pedestrianFeature.xml");
-	//primalSVM = new PrimalSVM("ped0626_auto.xml");
+	//primalSVM = new PrimalSVM("pedestrianFeature.xml");
+	primalSVM = new PrimalSVM("ped0626_auto.xml");
 		
 	vector<float> hogVector;
 	primalSVM->getSupportVector(hogVector);
 	_descriptor->setVersion(false);
 	_descriptor->setCache(false);
+	_descriptor->setHroizon(-1);
 	_descriptor->setSVMDetector(hogVector);
 
 	//load pos data
 	string path = "testPic/";
-	ifstream ifs("compare/"+path + "000positive.txt", ios::in);
-	//ifstream ifs("pos/moto/000positive.txt", ios::in);
+	//string path = "testPicneg/";
+	//string path = "testPicnegrename/";
+	ifstream ifs("compare/"+path + "000positive.txt", ios::in);	
 	if (!ifs.is_open())
 	{
 		throw exception("open POS data fail");
 	}
 	int count = 0;
 	double sum = 0.0;
+	int tn=0;
 	while (!ifs.eof())
 	{
 		string fileName;
 		getline(ifs, fileName);
 		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		//if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "jpg")
 		{
 			Mat img = imread("compare/" + path + "/" + fileName);
+			
+			double sizeRate = 0.5;			
+			if (img.rows*sizeRate>= _descriptor->winSize.height && img.cols*sizeRate>= _descriptor->winSize.width)
+			{
+				resize(img, img, Size(), sizeRate, sizeRate);
+				if (img.rows*sizeRate >= _descriptor->winSize.height && img.cols*sizeRate >= _descriptor->winSize.width)
+				{
+					resize(img, img, Size(), sizeRate, sizeRate);				
+				}			
+			}
+			
 			Mat grayImg;
 			if (img.empty())
 			{
@@ -1320,24 +1335,110 @@ void FeatureExtractor::verifyNewHOG()
 			//cout << fileName << endl;			
 			cvtColor(img, grayImg, CV_BGR2GRAY);
 			vector<Rect> result;
+
+			//int count = 0;			
+			//string temp = fileName.substr(0,fileName.size() - 4);
+			///*if (temp.compare("00001148")==0 || temp.compare("00001241") == 0||
+			//	temp.compare("00001401")==0 || temp.compare("00001402") == 0||
+			//	temp.compare("00001455") == 0|| temp.compare("01-03d") == 0||
+			//	temp.compare("01-03e") == 0|| temp.compare("01-03f") == 0||
+			//	temp.compare("02-03k") == 0 || temp.compare("02-03n") == 0 || 
+			//	temp.compare("bike_001") == 0|| temp.compare("bike_002") == 0||
+			//	temp.compare("bike_003") == 0|| temp.compare("bike_004") == 0||
+			//	temp.compare("bike_005") == 0|| temp.compare("bike_006") == 0||
+			//	temp.compare("bike_007") == 0 || temp.compare("bike_008") == 0||
+			//	temp.compare("bike_009") == 0|| temp.compare("no_person__no_bike_005") == 0||
+			//	temp.compare("bike_037") == 0|| temp.compare("bike_010") == 0||
+			//	temp.compare("D2004-01-03_17h26m13s") == 0)
+			//	
+			//{				
+			//	img = imread("compare/" + path + "/" + fileName);
+			//	if (img.empty())
+			//	{
+			//		cout << fileName << " error" << endl;					
+			//		throw exception("load POS data fail");
+			//	}				
+			//	cvtColor(img, grayImg, CV_BGR2GRAY);
+			//	cout << temp<<"modify" << endl;
+			//	_descriptor->detectMultiScale(grayImg, result, 0.0, Size(8, 8), Size(), 1.01, 2.0, false);
+			//	for (int i = 0; i<result.size(); i++)
+			//	{
+			//		cv::rectangle(img, result[i], cv::Scalar(255, 0, 0), 2);
+			//	}
+			//	cv::imwrite("compare/0822negSpi/" + temp  + ".jpg", img);
+			//	continue;
+			//}*/
+			//cout << temp << endl;
+
+			////cout <<"Origw:"<< grayImg.cols << endl;
+			////cout <<"Origh:"<< grayImg.rows << endl;
+			//for (int h = 0;h<grayImg.rows; h+= grayImg.rows/2)
+			//{					
+			//	for (int w = 0;w<grayImg.cols; w+= grayImg.cols/2)
+			//	{													
+			//		//Rect roi = Rect(w,h, grayImg.cols/ 2, grayImg.rows / 2);														
+			//		Rect roi = Rect(w, h, _descriptor->winSize.width, _descriptor->winSize.height);					
+			//		Mat test;
+			//		try {
+			//			test = grayImg(roi).clone();
+			//		}
+			//		catch (exception &e) 
+			//		{
+			//			continue;
+			//		}
+			//		_descriptor->detectMultiScale(grayImg(roi), result, 0.0, Size(8, 8), Size(), 1.01, 2.0, false);
+			//		for (int i = 0; i<result.size(); i++)
+			//		{
+			//			cv::rectangle(img(roi), result[i], cv::Scalar(255, 0, 0), 2);
+			//		}
+			//		tn += result.size();
+			//		/*cv::imshow("image", img(roi));
+			//		cv::waitKey(0);	*/
+			//		stringstream s;
+			//		s << count;
+			//		cv::imwrite("compare/0822negSpi/"+ temp + s.str()+".jpg", img(roi));
+			//		//cout << "compare/0822negSpi/" + temp + s.str() + ".jpg Save" << endl;
+			//		count++;					
+			//	}
+			//}
+			//
+
+			//pos
 			unsigned long start = clock();
-			_descriptor->detectMultiScale(grayImg, result, 0.0, Size(8, 8), Size(), 1.05, 2.0,false);
+			_descriptor->detectMultiScale(grayImg, result, 0.3, Size(8, 8), Size(), 1.01, 2.0, false);						
 			unsigned long end = clock();
+
+			if (result.size() == 0) 
+			{				
+				Mat img2 = imread("compare/" + path + "/" + fileName);
+				if (img2.rows*sizeRate >= _descriptor->winSize.height && img2.cols*sizeRate >= _descriptor->winSize.width)
+				{
+					img2 = imread("compare/" + path + "/" + fileName);
+					resize(img2, img2, Size(), sizeRate, sizeRate);
+					cvtColor(img2, grayImg, CV_BGR2GRAY);
+					_descriptor->detectMultiScale(grayImg, result, 0.5, Size(8, 8), Size(), 1.01, 2.0, false);					
+					img = img2;
+				}
+			}
+				
 			count++;
 			sum += ((end - start) / 1000.0);
-			printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
+		//	printf("%s-total time=%1.3f seconds\n", fileName,(end - start) / 1000.0);
 			
 			for (int i = 0; i<result.size(); i++)
 			{
 				cv::rectangle(img, result[i], cv::Scalar(255, 0, 0), 2);
-			}			;
+			}
 			//cv::imshow("image", img);
 			//cv::waitKey(0);
-			cv::imwrite("compare/preresult/"+fileName+".jpg", img);			
+			//cv::imwrite("compare/preresult/"+fileName+".jpg", img);			
+			//cv::imwrite("compare/0822negSpi/" + fileName, img);			
+			cv::imwrite("compare/0826/" + fileName, img);			
 		}
 	}
+	printf("average time=%1.3f seconds\n", sum/count);
+	cout <<"tn:"<< tn << endl;
 	ifs.close();	
-
 }
 
 void FeatureExtractor::verifyHelmet()
@@ -1349,10 +1450,11 @@ void FeatureExtractor::verifyHelmet()
 	};
 		
 	int type = HOGSVM;
+	//int type = HOUGH;
 
-	PrimalSVM* primalSVM;
-	primalSVM = new PrimalSVM("helmet0818_auto.xml");
-	
+	PrimalSVM* primalSVM;	
+	primalSVM = new PrimalSVM("helmet0827_auto.xml");
+
 	vector<float> hogVector;
 	primalSVM->getSupportVector(hogVector);
 	_descriptor->setVersion(false);
@@ -1360,85 +1462,113 @@ void FeatureExtractor::verifyHelmet()
 	_descriptor->setSVMDetector(hogVector);
 
 
-	//string path = "pos/機車正背面";
-	//ifstream ifs(path + "/000positive.txt", ios::in);	
-	//if (!ifs.is_open())
-	//{
-	//	throw exception("open POS data fail");
-	//}
-	//int count = 0;
-	//double sum = 0.0;
-	//while (!ifs.eof())
-	//{
-	//	string fileName;
-	//	getline(ifs, fileName);
-	//	if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
-	//	{
-	//		Mat img = imread(path + "/" + fileName);
-	//		Mat grayImg;
-	//		if (img.empty())
-	//		{
-	//			std::cout << fileName << " error" << std::endl;
-	//			throw exception("load POS data fail");
-	//		}
-	//		//cout << fileName << endl;		
+	string path = "pos/機車正背面";
+	ifstream ifs(path + "/000positive.txt", ios::in);
+	//string path = "neg/機車正背面";	
+	//ifstream ifs(path + "/000negative.txt", ios::in);
+	if (!ifs.is_open())
+	{
+		throw exception("open POS data fail");
+	}
+	int count = 0;
+	double sum = 0.0;
+	int detect = 0;
+	while (!ifs.eof())
+	{
+		string fileName;
+		getline(ifs, fileName);
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		{
+			Mat img = imread(path + "/" + fileName);
+			Mat grayImg;
+			if (img.empty())
+			{
+				std::cout << fileName << " error" << std::endl;
+				throw exception("load POS data fail");
+			}
+			//cout << fileName << endl;		
 
-	//		
+			resize(img, img, Size(), 1.4, 1.4);
+			cvtColor(img, grayImg, CV_BGR2GRAY);
 
-	//		resize(img, img, Size(), 1.4, 1.4);
-	//		cvtColor(img, grayImg, CV_BGR2GRAY);
+			Rect roi = checkROI(grayImg,"正背面");
+			
+			if(type==HOUGH)
+			{
+				Head head;				
+				unsigned long start = clock();
+				bool flag = detectedHeadHoughCircles(grayImg(roi), &head);
+				unsigned long end = clock();
+				count++;
+				sum += ((end - start) / 1000.0);
+				if (flag) 
+				{
+					if (roi.contains(head.center))
+					{
+						circle(img(roi), head.center, head.radius, Scalar(0, 255, 0), 3);
+					}
+					else
+					{
+						cout << "headx" << head.center.x << endl;
+						cout << "heady" << head.center.y << endl;
+						std::cout << fileName << std::endl;
+						cout << "over" << endl;				
+					}
+				}									
+				printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
+				//cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
+				
+			}
+			else  if(type == HOGSVM)
+			{
+				vector<Rect> result;
+				vector<double> resultWeight;
+				unsigned long start = clock();
+				//_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.8, Size(1, 1), Size(), 1.01, 2.0, false);				
+				_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.3, Size(2, 2), Size(), 1.01, 2.0, false);
+				unsigned long end = clock();
+				int Max = INT32_MIN;
+				int maxIndex = -1;
+				for (int i = 0; i<resultWeight.size(); i++)
+				{
+					if (resultWeight[i] > Max)
+					{
+						Max = resultWeight[i];
+						maxIndex = i;
+					}
+				}				
+				
+				count++;
+				sum += ((end - start) / 1000.0);
+				//printf("total time=%1.4f seconds\n", (end - start) / 1000.0);				
+				if (maxIndex != -1)
+				{
+					detect++;
+					cv::rectangle(img(roi), result[maxIndex], cv::Scalar(255, 0, 0), 2);
+				}
+			//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
+				//cv::imshow("image", img);
+				//cv::waitKey(0);
+				//cv::imwrite("helmetResult/0822hogsvm/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/0821hogsvmneg/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/0827/" + fileName + ".jpg", img);
+			}			
+		}
+	}
+	cout <<"detect:"<< detect << endl;
+	//printf("average time=%1.4f seconds\n", sum / count);
+	ifs.close();
+	cin.get();
 
-	//		Rect roi = checkROI(grayImg,"正背面");
-	//		
-	//		if(type==HOUGH)
-	//		{
-	//			Head head;				
-	//			unsigned long start = clock();
-	//			detectedHeadHoughCircles(grayImg(roi), &head);
-	//			unsigned long end = clock();
-	//			count++;
-	//			sum += ((end - start) / 1000.0);
-	//			circle(img(roi), head.center, head.radius, Scalar(0, 255, 0),3);
-	//			printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
-	//		//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
-	//			cv::imwrite("helmetResult/hough/" + fileName + ".jpg", img);
-	//		}
-	//		else  if(type == HOGSVM)
-	//		{
-	//			vector<Rect> result;
-	//			vector<double> resultWeight;
-	//			unsigned long start = clock();
-	//			_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.8, Size(1, 1), Size(), 1.01, 2.0, false);				
-	//			int Max = INT32_MIN;
-	//			int maxIndex = -1;
-	//			for (int i = 0; i<resultWeight.size(); i++)
-	//			{
-	//				if (resultWeight[i] > Max)
-	//				{
-	//					Max = resultWeight[i];
-	//					maxIndex = i;
-	//				}
-	//			}
-	//			
-	//			unsigned long end = clock();
-	//			count++;
-	//			sum += ((end - start) / 1000.0);
-	//			printf("total time=%1.3f seconds\n", (end - start) / 1000.0);				
-	//			if (maxIndex != -1)
-	//			{
-	//				cv::rectangle(img(roi), result[maxIndex], cv::Scalar(255, 0, 0), 2);
-	//			}
-	//		//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
-	//			//cv::imshow("image", img);
-	//			//cv::waitKey(0);
-	//			cv::imwrite("helmetResult/hogsvm/" + fileName + ".jpg", img);
-	//		}			
-	//	}
-	//}
-	//ifs.close();
 
+	count = 0;
+	sum = 0.0;
+	detect = 0;
 	string path2 = "pos/機車側面全身";
 	ifstream ifs2(path2 + "/000positive.txt", ios::in);
+
+	//string path2 = "neg/機車側面全身";	
+	//ifstream ifs2(path2 + "/000negative.txt", ios::in);
 	if (!ifs2.is_open())
 	{
 		throw exception("open POS data fail");
@@ -1467,21 +1597,38 @@ void FeatureExtractor::verifyHelmet()
 			{
 				Head head;				
 				unsigned long start = clock();
-				detectedHeadHoughCircles(grayImg(roi), &head);
+				bool flag=detectedHeadHoughCircles(grayImg(roi), &head);
 				unsigned long end = clock();
-				/*count++;
-				sum += ((end - start) / 1000.0);*/
-				circle(img(roi), head.center, head.radius, Scalar(0, 255, 0),3);
+				count++;
+				sum += ((end - start) / 1000.0);
+				if (flag)
+				{
+					if (roi.contains(head.center))
+					{
+						circle(img(roi), head.center, head.radius, Scalar(0, 255, 0), 3);
+
+					}
+					else
+					{
+						cout << "headx" << head.center.x << endl;
+						cout << "heady" << head.center.y << endl;
+						std::cout << fileName << std::endl;
+						cout << "over" << endl;
+						//cin.get();
+					}
+				}				
 				printf("total time=%1.3f seconds\n", (end - start) / 1000.0);
 			//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
-				cv::imwrite("helmetResult/hough2/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/houghneg2/" + fileName + ".jpg", img);
 			}
 			else  if(type == HOGSVM)
 			{
 				vector<Rect> result;
 				vector<double> resultWeight;
 				unsigned long start = clock();
-				_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.8, Size(1, 1), Size(), 1.01, 2.0, false);				
+				//_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.8, Size(2, 2), Size(), 1.01, 2.0, false);				
+				_descriptor->detectMultiScale(grayImg(roi), result, resultWeight, 0.3, Size(2, 2), Size(), 1.01, 2.0, false);
+				unsigned long end = clock();
 				int Max = INT32_MIN;
 				int maxIndex = -1;
 				for (int i = 0; i<resultWeight.size(); i++)
@@ -1493,23 +1640,28 @@ void FeatureExtractor::verifyHelmet()
 					}
 				}
 				
-				unsigned long end = clock();
-				/*count++;
-				sum += ((end - start) / 1000.0);*/
-				printf("total time=%1.3f seconds\n", (end - start) / 1000.0);				
+				
+				count++;
+				sum += ((end - start) / 1000.0);
+			//	printf("total time=%1.3f seconds\n", (end - start) / 1000.0);				
 				if (maxIndex != -1)
 				{
+					detect++;
 					cv::rectangle(img(roi), result[maxIndex], cv::Scalar(255, 0, 0), 2);
 				}
 			//	cv::rectangle(img, roi, cv::Scalar(255, 255, 0), 1);
 				//cv::imshow("image", img);
 				//cv::waitKey(0);
-				cv::imwrite("helmetResult/hogsvm2/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/0821hogsvm2/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/0822hogsvm2/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/0821hogsvmneg2/" + fileName + ".jpg", img);
+				//cv::imwrite("helmetResult/08272/" + fileName + ".jpg", img);				
 			}			
 		}
 	}
+	cout << "detect:" << detect << endl;
+	printf("average time=%1.3f seconds\n", sum / count);
 	ifs2.close();
-
 }
 
 Rect FeatureExtractor::checkROI(Mat frame,string type)
@@ -1525,6 +1677,10 @@ Rect FeatureExtractor::checkROI(Mat frame,string type)
 		y = 0;
 		width = frame.cols;
 		height = frame.rows / 3;
+		/*x = frame.cols /4;
+		y = 0;
+		width = frame.cols/ 2;
+		height = frame.rows / 3;*/
 	}
 	if (type.compare("側面") == 0) 
 	{
@@ -1547,7 +1703,7 @@ bool FeatureExtractor::detectedHeadHoughCircles(Mat grayFrame, Head * head)
 		minDist = sample.cols;
 	}
 	double param1 = 100;
-	double param2 = 15;
+	double param2 = 20;//15
 	int minRadius = sample.cols / 5;
 	int maxRadius = sample.cols / 3;
 	if (sample.cols > sample.rows)
@@ -1558,7 +1714,7 @@ bool FeatureExtractor::detectedHeadHoughCircles(Mat grayFrame, Head * head)
 	HoughCircles(sample, circles, CV_HOUGH_GRADIENT, dp, minDist, param1, param2, minRadius, maxRadius);
 	if (circles.size() != 0)
 	{
-		cv::Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
+		cv::Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));		
 		int radius = cvRound(circles[0][2]);
 		head->center = center;
 		head->radius = radius;
@@ -1579,7 +1735,7 @@ bool FeatureExtractor::detectedHeadHoughCircles(Mat grayFrame, Head * head)
 		minDist2 = sample2.cols;
 	}
 	double param12 = 50;
-	double param22 = 5;
+	double param22 = 15;//5;
 	int minRadius2 = sample.cols / 5;
 	int maxRadius2 = sample.cols / 3;
 	if (sample.cols > sample.rows)
@@ -1600,3 +1756,110 @@ bool FeatureExtractor::detectedHeadHoughCircles(Mat grayFrame, Head * head)
 	}
 	return false;
 }
+
+inline Mat merge_image(Mat &a, Mat &b)
+{
+	if (a.size() != b.size())
+		resize(a, a, b.size());
+		//throw std::string("Could not merge two images with different size");
+	Mat output_frame(a.rows, a.cols * 2, a.type());
+	a.copyTo(output_frame(Rect(0, 0, a.cols, a.rows)));
+	b.copyTo(output_frame(Rect(a.cols, 0, b.cols, b.rows)));
+	return output_frame;
+}
+
+void FeatureExtractor::merge()
+{	
+	string path = "compare/0822size03";
+	string path2 = "compare/groundtruth";
+	ifstream ifs(path + "/000positive.txt", ios::in);
+	ifstream ifs2(path2 + "/000positive.txt", ios::in);
+
+	//string path2 = "neg/機車側面全身";	
+	//ifstream ifs2(path2 + "/000negative.txt", ios::in);
+	if (!ifs2.is_open()|| !ifs.is_open())
+	{
+		throw exception("open POS data fail");
+	}
+
+	while (!ifs2.eof())
+	{
+
+		string fileName;
+		getline(ifs2, fileName);
+		if (fileName != "" && fileName.substr(fileName.size() - 3, 3) != "txt")
+		{
+			Mat img = imread(path + "/" + fileName);
+			Mat img2 = imread(path2 + "/" + fileName);
+			
+			if (img.empty()|| img2.empty())
+			{
+				cout << fileName << " error" << endl;
+				throw exception("load POS data fail");
+			}
+			
+			Mat mergeImg=merge_image(img, img2);
+			putText(mergeImg, "mine", Point(20, 20), 0, 1, Scalar(255, 255, 255), 5, 8, false);
+			cv::imwrite("compare/mergeTosee/"+ fileName, mergeImg);
+			
+
+			
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
